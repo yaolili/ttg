@@ -16,9 +16,18 @@ from sklearn.feature_extraction.text import TfidfTransformer
 
 class Distance:
     def __init__(self, u, corpus):
-        self.sigma = u
+        self.mu = float(u)
         self.docSet = {}
         self.totalWords = 0
+        with open(corpus, "r")as fin:
+            for i, line in enumerate(fin):
+                if i == 0:
+                    self.totalWords = int(line)
+                else:
+                    word, num = line.strip().split("\t")
+                    self.docSet[word] = int(num)
+        '''
+        #first version deal with origin corpus
         with open(corpus, "r")as fin:           
             log = open("Distance.log.txt", "w+")
             for i, line in enumerate(fin):
@@ -45,7 +54,7 @@ class Distance:
             result.write(key + "\t" + str(self.docSet[key]) + "\n")
         log.close()
         result.close()
-        
+        '''
                 
     def __stem(self, s):
         s = self.__preProcess(s)
@@ -74,13 +83,23 @@ class Distance:
         aList1 = []
         aList2 = []
         for key in counter3:
-            #print key
             if key in counter1:
                 v1 = counter1[key]
             else:
                 v1 = 0
-            aList1.append(float(v1) / len(s1))
-            aList2.append(float(counter3[key] - v1) / len(s2))
+            if key in self.docSet:
+                smooth = float(self.docSet[key]) / self.totalWords
+            else:
+                smooth = 0
+            
+            score1 = (v1 + self.mu * smooth) / (len(s1) + self.mu)
+            score2 = (counter3[key] - v1 + self.mu * smooth) / (len(s2) + self.mu)
+            if score1 == 0:
+                score1 = 0.01
+            if score2 == 0:
+                score2 = 0.01
+            aList1.append(score1)
+            aList2.append(score2)
         return aList1, aList2
         
                 
@@ -94,24 +113,24 @@ class Distance:
         Discrete probability distributions.
         """
         p, q = self.__vector(s1, s2)
-        print p
-        print q
+        #print p
+        #print q
         p = np.asarray(p, dtype = np.float)
         q = np.asarray(q, dtype = np.float)
         
-        #remain to fix tuning
-        #return np.sum(np.where(p != 0, p * np.log(p / q), 0))
-        return np.sum(np.where(p != 0, p * np.log(p / q), 0))
+        k1 = np.sum(np.where(p != 0, p * np.log(p / q), 0))
+        k2 = np.sum(np.where(q != 0, q * np.log(q / p), 0))
+        return (k1 + k2) / 2
     
     
 if __name__ == "__main__":
         
-    s1 = "mad men season amcseason overview detail discuss mad men season kei art don face challeng offic home scdp cgc merg creat scamp mad men season wikipedia free encyclopediath sixth season american televis drama seri mad men premier april hour episod conclud june 2013 mad men tv seri episod imdbmad men season time zone s7 ep1 apr time zone don forc indefinit season season men season episod episod guid flavorwireapr full year season premier mad men air forgiven rememb thing rememb mad men season finaleapr mad men seventh final season premier sundai left"
-    
     s2 = "http://t.co/5AUYw6l3pg mad men season 6 poster don draper s two face teas the mad men season 6 poster teas two side of don mad men season 6 poster don draper s two face teas zap2it"
     
-    instance = Distance()
-
+    s1 = "http://t.co/AbdnEQhaFT fantast artwork for new mad men seri poster mad men season 6 poster the two don draper"
+    
+    instance = Distance(100, "corpus.info.txt")
+    print "__init__ done!"
     print instance.kl(s1, s2)    
 
 
