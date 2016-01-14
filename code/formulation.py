@@ -125,9 +125,9 @@ class Distance:
     
 if __name__ == "__main__":
         
-    s2 = "http://t.co/5AUYw6l3pg mad men season 6 poster don draper s two face teas the mad men season 6 poster teas two side of don mad men season 6 poster don draper s two face teas zap2it"
+    s2 = "http://t.co/AbdnEQhaFT fantast artwork for new mad men seri poster mad men season 6 poster the two don draper"
     
-    s1 = "http://t.co/AbdnEQhaFT fantast artwork for new mad men seri poster mad men season 6 poster the two don draper"
+    s1 = "http://t.co/Ot0B5AYMpk mad men"
     
     instance = Distance(100, "corpus.info.txt")
     print "__init__ done!"
