@@ -125,9 +125,9 @@ class Distance:
     
 if __name__ == "__main__":
         
-    s2 = "http://t.co/AbdnEQhaFT fantast artwork for new mad men seri poster mad men season 6 poster the two don draper"
+    s2 = "http://t.co/fWX9kjZz a port in the storm how on professor defi the queensland flood with minecraft kotaku australia a port in the storm how on professor defi the queensland flood with minecraft kotaku australia"
     
-    s1 = "http://t.co/Ot0B5AYMpk mad men"
+    s1 = "cyclon oswald wikipedia free encyclopediaacross affect region damag sever weather flood amount januari australian bureau meteorolog tropic cyclon low pressur system move east queens    land coast flood australia wikipedia free encyclopediathi list notabl record flood occur countri australia eastern australia flood jan qld nsw 6 flood disast hit australia east coast abc new australian jan australia east coast flood disast peopl bundaberg unabl return home citi bbc new major flood crisi hit queensland australiajan australian state queensland face major flood crisi premier warn rescuer reach hundr peopl queensland flood australian red crossaustralian red cross power human recov major disast queensland flood long complex emot journei queensland flood eastern australia flood western australian"
     
     instance = Distance(100, "corpus.info.txt")
     print "__init__ done!"

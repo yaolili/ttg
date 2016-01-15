@@ -12,8 +12,8 @@ from os import listdir
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
-        print "sys.argv[1]: input order file!"
-        print "sys.argv[2]: input content file!"
+        print "sys.argv[1]: input res2014_L2R path!"
+        print "sys.argv[2]: input trec14.docEx.api.corpus!"
         print "sys.argv[3]: output file path!"
         exit()
 
@@ -40,7 +40,8 @@ if __name__ == '__main__':
     files = [f for f in listdir(sys.argv[1])]
     for file in files:
         readPath = sys.argv[1] + file
-        writePath = sys.argv[3] + file + ".All"
+        writePath = sys.argv[3] + file + ".content"
+        
         f1 = open(readPath, "r")
         f3 = open(writePath, "w+")
         for line in f1:

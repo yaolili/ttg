@@ -21,6 +21,8 @@ class Rank:
                     self.widTotal[key] += value
 
     def __normalize(self, origin, max, min):
+        if(max == min):
+            return 1
         return 1 - (origin - min) / (max - min)
         
     def generate(self, d, yibuson):
