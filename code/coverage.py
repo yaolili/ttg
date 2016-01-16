@@ -16,7 +16,15 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 
 class Coverage:
-    def __init__(self, curCluster):
+    def __init__(self, cluster, tweet):
+        self.coverage = {}
+        for i in range(len(cluster)):
+            self.__vector(cluster[i], tweet)
+        # print self.coverage
+        # print "------"
+        
+    def getCoverage(self):
+        return self.coverage
     
     def __preProcess(self, s):
         tokenizer = RegexpTokenizer(r'\w+') 
@@ -24,37 +32,44 @@ class Coverage:
         s = [x.lower() for x in s]
         return s
     
-    def __vector(self, s1, s2):
-        s3 = s1 + " " + s2
+    def __vector(self, curCluster, tweet):
+        counterSet = []  #curCluster各个wid对应的Counter
+        widSet = []      #curCluster各个wid
+        all = 0          #分子
+        for i in range(len(curCluster)):
+            wid = curCluster[i]
+            widSet.append(wid)
+            wcontent = tweet[wid]
+            wcontent = self.__preProcess(wcontent)
+            curCounter = collections.Counter(wcontent)
+            all += pow(2, len(curCounter)) - 1
+            counterSet.append(curCounter)
 
-        s1 = self.__preProcess(s1)
-        s2 = self.__preProcess(s2)
-        s3 = self.__preProcess(s3)
+        #求共现矩阵
+        occurence = {}
+        for i in range(len(curCluster)):
+            for j in range(len(curCluster)):
+                if(i == j):
+                    continue
+                key = str(i) + "-" + str(j)
+                occurence[key] = len(counterSet[j]) + len(counterSet[i]) - len(counterSet[i] + counterSet[j]) 
         
-        counter1 = collections.Counter(s1)
-        counter2 = collections.Counter(s2)
-        counter3 = collections.Counter(s3)
-        
-        aList1 = []
-        aList2 = []
-        for key in counter3:
-            if key in counter1:
-                v1 = counter1[key]
-            else:
-                v1 = 0
-            if key in self.docSet:
-                smooth = float(self.docSet[key]) / self.totalWords
-            else:
-                smooth = 0
-            
-            score1 = (v1 + self.mu * smooth) / (len(s1) + self.mu)
-            score2 = (counter3[key] - v1 + self.mu * smooth) / (len(s2) + self.mu)
-            if score1 == 0:
-                score1 = 0.01
-            if score2 == 0:
-                score2 = 0.01
-            aList1.append(score1)
-            aList2.append(score2)
-        return aList1, aList2
-        
+        #计算coverage得分
+        for i in range(len(counterSet)):
+            #curValue为分母
+            curValue = pow(2, len(counterSet[i])) - 1
+            for j in range(len(counterSet)):
+                if i == j:
+                    continue
+                key = str(i) + "-" + str(j)
+                curValue += pow(2, occurence[key]) - 1
+            self.coverage[widSet[i]] = float(curValue) / all
+
+if __name__ == "__main__":
+    cluster = [[2, 3], [1]]
+    tweet = {1:"#RonWeasleyBirthday it s ron weaslei s birthdai the ginger who vomit slug out from hi mouth happi birthdai ron", 2:"happi birthdai ron weaslei", 3:"#WeasleyIsOurKing happi birthdai ron weaslei"}
+    covInstance = Coverage(cluster, tweet)
+    result = covInstance.getCoverage()
+    print result
+    
     
