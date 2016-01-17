@@ -4,7 +4,7 @@
 # ROLE:     TODO (some explanation)
 # CREATED:  2016-01-02 19:42:26
 # MODIFIED: 2016-01-15 00:31:28
-# USAGE: python cluster.py ../data/query.txt ../data/candidate/ 100 corpus.info.txt 1.4 0.15 ../data/result/ 0.01
+# USAGE: python cluster.py ../data/query.txt ../data/candidate/ 100 corpus.info.txt 1.77 0.23 ../data/result/ 0.9
 
 import os
 import sys
@@ -30,14 +30,24 @@ class Cluster:
             self.query[qid] = qcontent
         f1.close()
         print "read query info done!"
+        
+        self.golden = {}
+        f2 = open("golden.txt", "r")
+        for i, line in enumerate(f2):
+            clusterCount, tweetCount = line.strip().split("\t")
+            curQid = i + 170
+            self.golden[curQid] = int(tweetCount)
+        print "golden.txt read done!"
+            
+            
     
-    def write(self, writePath, yibuson):
-        writeFile = writePath + "res.S" + str(self.sigma) + ".L" + str(self.lamda)
+    def write(self, writePath, alpha, beta):
+        writeFile = writePath + "res.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta)
         result = open(writeFile, "w+")
-        log = open(writePath + "log.S" + str(self.sigma) + ".L" + str(self.lamda), "w+")
+        log = open(writePath + "log.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta), "w+")
         log.write("Qid\tclusterCount\ttweetCount\n")
-        log1 = open(writePath + "qidWidKL.S" + str(self.sigma) + ".L" + str(self.lamda), "w+")
-        log2 = open(writePath + "widWidKL.S" + str(self.sigma) + ".L" + str(self.lamda), "w+")
+        log1 = open(writePath + "qidWidKL.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) , "w+")
+        log2 = open(writePath + "widWidKL.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) , "w+")
         #candidate files
         num = 1
         files = []
@@ -63,9 +73,9 @@ class Cluster:
                     qid, Qid, wid, rank, score, runName, content = line.strip().split("\t")
                     
                     #first time selection
-                    if(float(score) < 4.6):
+                    if(float(score) < 4.59):
                         if not self.cluster:
-                            print "break out of 4.6, ", file, " , empty cluster!"
+                            print "break out of 4.59, ", file, " , empty cluster!"
                             exit()
                         break
                         
@@ -103,8 +113,8 @@ class Cluster:
                     for widKey in self.widWidKL[key][i]:
                         log2.write(key + "-" + widKey + "\t" + str(self.widWidKL[key][i][widKey]) + "\n")
                         
-            rankInstance = Rank(self.widWidKL, self.widWidMin, self.widWidMax)
-            self.widScore = rankInstance.generate(0.85, yibuson)
+            rankInstance = Rank(self.widWidKL, self.widWidMin, self.widWidMax, self.cluster, self.tweet)
+            self.widScore = rankInstance.generate(0.85, 0.01, alpha, beta)
             
             #log info
             clusterCount = len(self.cluster)
@@ -169,8 +179,7 @@ class Cluster:
         else:
             self.cluster[index].append(wid)
   
-        
-# USAGE: python cluster.py ../data/query.txt ../data/candidate/ 100 corpus.info.txt 1.4 0.15 ../data/result/
+
 if __name__ == '__main__':
     if len(sys.argv) < 8:
         print "sys.argv[1]: input query file!"
@@ -180,10 +189,12 @@ if __name__ == '__main__':
         print "sys.argv[5]: input similarity threshold!"
         print "sys.argv[6]: input cluster threshold!"
         print "sys.argv[7]: output file path!"
+        print "sys.argv[8]: input textRank alpha!"
+        print "sys.argv[9]: input textRank beta!"
         exit()
 
     clusterInstance = Cluster(sys.argv[1], sys.argv[2], float(sys.argv[3]), sys.argv[4], float(sys.argv[5]), float(sys.argv[6]))
-    clusterInstance.write(sys.argv[7], float(sys.argv[8]))
+    clusterInstance.write(sys.argv[7], float(sys.argv[8]), float(sys.argv[9]))
     
     
 
