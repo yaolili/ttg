@@ -11,6 +11,7 @@ import sys
 from os import listdir
 from formulation import Distance
 from textRank import Rank
+from jaccard import Jaccard
 
 class Cluster:
     def __init__(self, queryFile, candidatePath, mu, corpusFile, sigma, lamda):
@@ -19,40 +20,24 @@ class Cluster:
         self.tweet = {}  
         self.mu = mu
         self.sigma = sigma      #similarity threshold
-        self.lamda = lamda      #cluster threshold       
+        self.lamda = lamda      #cluster threshold     
+        self.jaccInstance = Jaccard()
         self.klInstance = Distance(mu, corpusFile)
-        print "corpus read done!"
+        print "corpus read done!"    
     
-        #read query info
-        f1 = open(queryFile, "r")
-        for line in f1:
-            qid, qcontent = line.strip().split("\t")
-            self.query[qid] = qcontent
-        f1.close()
-        print "read query info done!"
-        
-        self.golden = {}
-        f2 = open("golden.txt", "r")
-        for i, line in enumerate(f2):
-            clusterCount, tweetCount = line.strip().split("\t")
-            curQid = i + 170
-            self.golden[curQid] = int(tweetCount)
-        print "golden.txt read done!"
-            
-            
-    
-    def write(self, writePath, alpha, beta):
-        writeFile = writePath + "res.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta)
+    def write(self, writePath, alpha, beta, yibuson):
+        writeFile = writePath + "res.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) + ".J" + str(yibuson)
         result = open(writeFile, "w+")
-        log = open(writePath + "log.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta), "w+")
+        log = open(writePath + "log.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) + ".J" + str(yibuson), "w+")
         log.write("Qid\tclusterCount\ttweetCount\n")
-        log1 = open(writePath + "qidWidKL.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) , "w+")
-        log2 = open(writePath + "widWidKL.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) , "w+")
-        #candidate files
+        log1 = open(writePath + "qidWidKL.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) + ".J" + str(yibuson), "w+")
+        log2 = open(writePath + "widWidKL.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) + ".J" + str(yibuson), "w+")
+        log3 = open(writePath + "jaccScore.4.59S" + str(self.sigma) + ".L" + str(self.lamda) + ".a" + str(alpha) + ".b" + str(beta) + ".J" + str(yibuson), "w+")
+
         num = 1
         files = []
         while(num <= 55):
-            files.append(str(num) + ".res.content")
+            files.append(str(num) + ".res.content.all")
             num += 1
         for file in files:
             #remember to make them initial on each query
@@ -65,12 +50,16 @@ class Cluster:
             self.widWidMax = 0
             self.widWidMin = 999 
             self.widScore = {}
+            self.jacc = {}
+            self.jaccMax = 0
+            self.jaccMin = 1
             self.resultList = []
             readPath = self.candidate + file  
             
             with open(readPath, "r") as fin:
                 for i, line in enumerate(fin):
-                    qid, Qid, wid, rank, score, runName, content = line.strip().split("\t")
+                    qid, Qid, wid, rank, score, runName, wcontent, qcontent = line.strip().split("\t")
+                    self.query[qid] = qcontent
                     
                     #first time selection
                     if(float(score) < 4.59):
@@ -79,13 +68,18 @@ class Cluster:
                             exit()
                         break
                         
-                    self.tweet[wid] = content
+                    self.tweet[wid] = wcontent
                     self.curQid = qid
                     
                     #calculate qidWidKL
-                    similarity = self.klInstance.kl(self.query[qid], content)
+                    similarity = self.klInstance.kl(self.query[qid], wcontent)
                     
-                    if similarity <= self.sigma:
+                    #calculate jaccard score
+                    jaccScore = self.jaccInstance.jaccardScore(qcontent, wcontent)
+                    
+                    if similarity <= self.sigma and jaccScore >= yibuson:
+                        
+                        #set self.qidWidKL
                         self.qidWidKL[qid+"-"+wid] = similarity
                         if (similarity > self.qidWidMax):
                             self.qidWidMax = similarity
@@ -93,13 +87,20 @@ class Cluster:
                         if (similarity < self.qidWidMin):
                             self.qidWidMin = similarity
                         
+                        #set self.jacc       
+                        self.jacc[qid+"-"+wid] = jaccScore
+                        if self.jaccMax < jaccScore:
+                            self.jaccMax = jaccScore
+                        if self.jaccMin > jaccScore:
+                            self.jaccMin = jaccScore    
+                        
                         #calculate widWidKL
                         if not self.cluster:
                             self.cluster.append([wid])
                             self.widWidKL[wid] = []
                         else:
                             self.__clustering(wid)
-                            
+
                     
                     if (i % 100) == 0:
                         print file, " => ", i
@@ -112,6 +113,9 @@ class Cluster:
                 for i in range(len(self.widWidKL[key])):
                     for widKey in self.widWidKL[key][i]:
                         log2.write(key + "-" + widKey + "\t" + str(self.widWidKL[key][i][widKey]) + "\n")
+            log3.write(str(self.jaccMin) + "\t" + str(self.jaccMax) + "\n")
+            for key in self.jacc:
+                log3.write(key + "\t" + str(self.jacc[key]) + "\n")
                         
             rankInstance = Rank(self.widWidKL, self.widWidMin, self.widWidMax, self.cluster, self.tweet)
             self.widScore = rankInstance.generate(0.85, 0.01, alpha, beta)
@@ -181,7 +185,7 @@ class Cluster:
   
 
 if __name__ == '__main__':
-    if len(sys.argv) < 8:
+    if len(sys.argv) < 11:
         print "sys.argv[1]: input query file!"
         print "sys.argv[2]: input candidate file path!"
         print "sys.argv[3]: input smooth mu!"
@@ -191,10 +195,11 @@ if __name__ == '__main__':
         print "sys.argv[7]: output file path!"
         print "sys.argv[8]: input textRank alpha!"
         print "sys.argv[9]: input textRank beta!"
+        print "sys.argv[10]: input jaccard yibuson!"
         exit()
 
     clusterInstance = Cluster(sys.argv[1], sys.argv[2], float(sys.argv[3]), sys.argv[4], float(sys.argv[5]), float(sys.argv[6]))
-    clusterInstance.write(sys.argv[7], float(sys.argv[8]), float(sys.argv[9]))
+    clusterInstance.write(sys.argv[7], float(sys.argv[8]), float(sys.argv[9]), float(sys.argv[10]))
     
     
 
