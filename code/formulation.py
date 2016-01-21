@@ -3,22 +3,32 @@
 # FILE:     formulation.py
 # ROLE:     TODO (some explanation)
 # CREATED:  2015-12-21 09:08:16
-# MODIFIED: 2015-12-21 09:08:26
+# MODIFIED: 2016-01-20 00:38:55
 
 import numpy as np
 import collections
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-  
+from w2v import W2V
+from scipy import linalg, mat, dot
 
 class Distance:
     def __init__(self, u, corpus):
+        #self.w2vInstantce = W2V("w2v.out")
         self.mu = float(u)
         self.docSet = {}
         self.totalWords = 0
+        self.stopwords = {}
+        with open("/home/yaolili/nltk_data/corpora/stopwords/english", "r")as fin:
+            for line in fin:
+                word = line.strip().split("\n")
+                if word:
+                    self.stopwords[word[0]] = 0
+                    
         with open(corpus, "r")as fin:
             for i, line in enumerate(fin):
                 if i == 0:
@@ -55,7 +65,8 @@ class Distance:
         log.close()
         result.close()
         '''
-                
+    
+    #unnecessary
     def __stem(self, s):
         s = self.__preProcess(s)
         stem = []
@@ -66,7 +77,8 @@ class Distance:
     def __preProcess(self, s):
         tokenizer = RegexpTokenizer(r'\w+') 
         s = tokenizer.tokenize(s) 
-        s = [x.lower() for x in s]
+        #s = [x.lower() for x in s]
+        s = [w.lower() for w in s if w.lower() not in self.stopwords]
         return s
 
 
@@ -102,7 +114,11 @@ class Distance:
             aList2.append(score2)
         return aList1, aList2
         
-                
+    def __cosine(self, list1, list2):
+        a = mat(list1)
+        b = mat(list2)
+        c = dot(a,b.T)/linalg.norm(a)/linalg.norm(b)
+        return c[0,0]            
     
     def kl(self, s1, s2):
         """Kullback-Leibler divergence D(P || Q) for discrete distributions
@@ -113,14 +129,20 @@ class Distance:
         Discrete probability distributions.
         """
         p, q = self.__vector(s1, s2)
-        #print p
-        #print q
+        # print p
+        # print q
+
         p = np.asarray(p, dtype = np.float)
         q = np.asarray(q, dtype = np.float)
         
         k1 = np.sum(np.where(p != 0, p * np.log(p / q), 0))
         k2 = np.sum(np.where(q != 0, q * np.log(q / p), 0))
         return (k1 + k2) / 2
+        
+        # w2v
+        # p = self.w2vInstantce.sentenceVector(s1)
+        # q = self.w2vInstantce.sentenceVector(s2)
+        # return self.__cosine(p, q)
     
     
 if __name__ == "__main__":
