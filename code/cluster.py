@@ -4,7 +4,7 @@
 # ROLE:     TODO (some explanation)
 # CREATED:  2016-01-02 19:42:26
 # MODIFIED: 2016-01-19 23:24:15
-# USAGE: python cluster.py ../data/query.txt ../data/candidate/ 100 corpus.info.txt 1.77 0.23 ../data/result/ 0.9
+# USAGE: python cluster.py ../data/query.txt ../data/candidate/ 100 corpus.info.txt 1.77 0.23 ../data/result/ 0.9978 0.022
 
 import os
 import sys
@@ -192,7 +192,7 @@ class Cluster:
   
 
 if __name__ == '__main__':
-    if len(sys.argv) < 9:
+    if len(sys.argv) < 10:
         print "sys.argv[1]: input query file!"
         print "sys.argv[2]: input candidate file path!"
         print "sys.argv[3]: input smooth mu!"
