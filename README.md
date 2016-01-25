@@ -13,6 +13,7 @@ corpus.info.txt
     First line contains the total number of words in corpus. And the format of the following each line is: word \t tfValue
     
 #Notice
-In the usage command, 100 stands for mu in Dirichlet smoothing. And 
-1.77, 0.23, 0.9978 are the relevance, novelty and coverage threshold respectively. Although 0.022 the threshold for Jaccard, it is not applied in 
-the best performance, which means the file "jaccard.py" is useless here. Likewise, the usage of embedding doesn't work for our TTG system, so I leave out the file "w2v.py".
+In the usage command, 100 stands for mu in Dirichlet smoothing. 
+And 1.77, 0.23, 0.9978 are the relevance, novelty and coverage threshold respectively. 
+Although 0.022 the threshold for Jaccard, it is not applied in the best performance, which means the file "jaccard.py" is useless here. 
+Likewise, the usage of embedding doesn't work for our TTG system, so I leave out the file "w2v.py".
